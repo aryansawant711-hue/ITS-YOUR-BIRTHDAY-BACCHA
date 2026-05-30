@@ -84,15 +84,9 @@
 
         const CELEBRATION_URL = "https://aryansawant711-hue.github.io/vinniesurprise/"; 
 
-        // 🌟 REAL MODE: Calculated dynamic target date
-        const getTargetDate = () => {
-            const now = new Date();
-            let target = new Date(now.getFullYear(), 4, 31); 
-            if (now > target) target = new Date(now.getFullYear() + 1, 4, 31);
-            return target;
-        };
-
-        const targetDate = getTargetDate();
+        // 🔒 FIXED PRODUCTION MODE: Strictly locked to May 31, 2026.
+        // It will count down to this day and never automatically roll over to 2027.
+        const targetDate = new Date(2026, 4, 31); 
 
         function App() {
             const [stage, setStage] = useState('countdown'); 
@@ -138,7 +132,7 @@
             const minutes = Math.floor((timeLeft / 1000 / 60) % 60);
             const seconds = Math.floor((timeLeft / 1000) % 60);
 
-            // True only when countdown hits final 60 seconds
+            // True only when countdown hits final 60 seconds (or is already 0)
             const isClickable = timeLeft <= 60000;
 
             // Anti-click Evading Algorithm
@@ -254,3 +248,4 @@
     </script>
 </body>
 </html>
+        
