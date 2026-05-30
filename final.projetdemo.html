@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Surprise Journey</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        body { background-color: #000814; color: #f8fafc; margin: 0; font-family: sans-serif; overflow: hidden; }
+        .glow { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 600px; height: 600px; background: rgba(192, 38, 211, 0.15); border-radius: 50%; filter: blur(120px); pointer-events: none; }
+        
+        /* Moon Styles */
+        .moon-container {
+            position: relative;
+            width: 180px;
+            height: 180px;
+            background: #e2e2e2;
+            border-radius: 50%;
+            box-shadow: 0 0 50px rgba(255, 255, 255, 0.2);
+            overflow: hidden;
+            background-image: 
+                radial-gradient(circle at 30% 30%, #d1d1d1 10%, transparent 20%),
+                radial-gradient(circle at 70% 60%, #c4c4c4 15%, transparent 25%),
+                radial-gradient(circle at 40% 80%, #b8b8b8 8%, transparent 15%);
+        }
+        .shadow {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #000814;
+            border-radius: 50%;
+            animation: moonPhase 5s ease-in-out forwards;
+        }
+        @keyframes moonPhase {
+            0% { transform: translateX(0px); }
+            100% { transform: translateX(190px); }
+        }
+
+        /* Heart Loading Bar Styles */
+        .progress-wrapper {
+            width: 250px;
+            height: 10px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            margin-top: 20px;
+            position: relative;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff85a2, #ff4d6d);
+            border-radius: 20px;
+            position: relative;
+        }
+        .heart-cursor {
+            position: absolute;
+            right: -10px;
+            top: -22px;
+            font-size: 20px;
+            animation: bounce 0.6s infinite alternate ease-in-out;
+        }
+        @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-5px); } }
+        
+        .shooting-star {
+            position: absolute;
+            height: 2px;
+            background: linear-gradient(90deg, white, transparent);
+            filter: drop-shadow(0 0 5px white);
+            transform: rotate(-45deg);
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const { motion, AnimatePresence } = window.Motion;
+
+        const CELEBRATION_URL = "https://aryansawant711-hue.github.io/vinniesurprise/"; 
+
+        // 🌟 REAL MODE: Calculated dynamic target date
+        const getTargetDate = () => {
+            const now = new Date();
+            let target = new Date(now.getFullYear(), 4, 31); 
+            if (now > target) target = new Date(now.getFullYear() + 1, 4, 31);
+            return target;
+        };
+
+        const targetDate = getTargetDate();
+
+        function App() {
+            const [stage, setStage] = useState('countdown'); 
+            const [timeLeft, setTimeLeft] = useState(Math.max(0, targetDate.getTime() - Date.now()));
+            const [progress, setProgress] = useState(0);
+            
+            const [btnPos, setBtnPos] = useState({ top: 'auto', left: 'auto' });
+            const [isAbsolute, setIsAbsolute] = useState(false);
+
+            // Countdown Timer Loop
+            useEffect(() => {
+                if (stage !== 'countdown') return;
+                const timer = setInterval(() => {
+                    const remaining = targetDate.getTime() - Date.now();
+                    setTimeLeft(remaining <= 0 ? 0 : remaining);
+                }, 1000);
+                return () => clearInterval(timer);
+            }, [stage]);
+
+            // Stage Transition Sequencer
+            useEffect(() => {
+                if (stage === 'moon') {
+                    const timer = setTimeout(() => setStage('loading'), 7500);
+                    return () => clearTimeout(timer);
+                }
+                if (stage === 'loading') {
+                    const timer = setInterval(() => {
+                        setProgress(prev => {
+                            if (prev >= 100) {
+                                clearInterval(timer);
+                                setTimeout(() => window.location.href = CELEBRATION_URL, 1000);
+                                return 100;
+                            }
+                            return prev + 1;
+                        });
+                    }, 50);
+                    return () => clearInterval(timer);
+                }
+            }, [stage]);
+
+            const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((timeLeft / (1000 * 60 * 60)) % 24);
+            const minutes = Math.floor((timeLeft / 1000 / 60) % 60);
+            const seconds = Math.floor((timeLeft / 1000) % 60);
+
+            // True only when countdown hits final 60 seconds
+            const isClickable = timeLeft <= 60000;
+
+            // Anti-click Evading Algorithm
+            const handleButtonEvade = () => {
+                if (isClickable) return;
+                
+                const padding = 120; 
+                const randomX = Math.random() * (window.innerWidth - 320 - padding * 2) + padding;
+                const randomY = Math.random() * (window.innerHeight - 120 - padding * 2) + padding;
+                
+                setIsAbsolute(true);
+                setBtnPos({
+                    left: `${randomX}px`,
+                    top: `${randomY}px`
+                });
+            };
+
+            return (
+                <div className="min-h-screen flex flex-col items-center justify-center p-6 relative select-none">
+                    <div className="glow" />
+                    
+                    <AnimatePresence mode="wait">
+                        {stage === 'countdown' && (
+                            <motion.div key="countdown" initial={{ opacity: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.8 }} className="flex flex-col items-center w-full">
+                                <div className="text-fuchsia-400 mb-12 tracking-[0.2em] text-sm font-medium uppercase text-center">The Big Day is Approaching</div>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-20 z-10 w-full max-w-4xl">
+                                    <TimeUnit value={days} label="Days" />
+                                    <TimeUnit value={hours} label="Hours" />
+                                    <TimeUnit value={minutes} label="Minutes" />
+                                    <TimeUnit value={seconds} label="Seconds" />
+                                </div>
+                                
+                                <div className="w-full flex items-center justify-center h-20">
+                                    <motion.button 
+                                        onClick={() => { if(isClickable) setStage('moon'); }}
+                                        onMouseEnter={handleButtonEvade}
+                                        onHoverStart={handleButtonEvade}
+                                        layout
+                                        style={(!isClickable && isAbsolute) ? { 
+                                            position: 'absolute', 
+                                            left: btnPos.left, 
+                                            top: btnPos.top,
+                                            zIndex: 50 
+                                        } : { position: 'relative' }}
+                                        transition={{ type: "spring", stiffness: 250, damping: 20 }}
+                                        whileHover={isClickable ? { scale: 1.05 } : {}} 
+                                        whileTap={isClickable ? { scale: 0.95 } : {}} 
+                                        className={`px-8 py-4 font-semibold rounded-full shadow-2xl whitespace-nowrap border transition-colors duration-300 ${
+                                            isClickable 
+                                            ? "bg-white text-black cursor-pointer border-white" 
+                                            : "bg-fuchsia-950/80 text-fuchsia-300/80 border-fuchsia-500/40 pointer-events-auto"
+                                        }`}
+                                    >
+                                        {isClickable ? "Go to Celebration →" : "🔒 Unlocks in the last minute!"}
+                                    </motion.button>
+                                </div>
+                            </motion.div>
+                        )}
+
+                        {stage === 'moon' && (
+                            <motion.div key="moon" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center">
+                                <div className="moon-container"><div className="shadow"></div></div>
+                                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 5.5 }} className="mt-10 text-fuchsia-200 text-2xl font-light tracking-widest text-center px-4">✨ this is you by the way ✨ somethig's special ahead 💖</motion.div>
+                                <Stars />
+                            </motion.div>
+                        )}
+
+                        {stage === 'loading' && (
+                            <motion.div key="loading" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center">
+                                <div className="text-pink-300 mb-4 text-sm tracking-widest uppercase">Almost there...</div>
+                                <div className="progress-wrapper">
+                                    <div className="progress-fill" style={{ width: `${progress}%` }}>
+                                        <div className="heart-cursor">💖</div>
+                                    </div>
+                                </div>
+                                <div className="mt-4 text-pink-400 font-bold">{progress}%</div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
+            );
+        }
+
+        function TimeUnit({ value, label }) {
+            return (
+                <div className="flex flex-col items-center gap-4">
+                    <div className="bg-white/5 border border-white/10 rounded-3xl w-full aspect-square flex items-center justify-center">
+                        <span className="text-5xl md:text-7xl font-light text-white">{value.toString().padStart(2, '0')}</span>
+                    </div>
+                    <span className="text-slate-400 text-xs uppercase tracking-widest">{label}</span>
+                </div>
+            );
+        }
+
+        function Stars() {
+            useEffect(() => {
+                const interval = setInterval(() => {
+                    const s = document.createElement('div');
+                    s.className = 'shooting-star';
+                    s.style.left = Math.random() * window.innerWidth + 'px';
+                    s.style.top = Math.random() * (window.innerHeight / 2) + 'px';
+                    s.style.width = (Math.random() * 100 + 50) + 'px';
+                    document.body.appendChild(s);
+                    s.animate([{ transform: 'rotate(-45deg) translateX(0)', opacity: 1 }, { transform: `rotate(-45deg) translateX(${window.innerWidth}px)`, opacity: 0 }], { duration: 1500 }).onfinish = () => s.remove();
+                }, 1500);
+                return () => clearInterval(interval);
+            }, []);
+            return null;
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
